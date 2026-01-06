@@ -1,19 +1,17 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Step, Mode, Combination, FilterSettings } from './types';
+import React, { useState, useEffect } from 'react';
+import { Step, Combination, FilterSettings } from './types';
 import * as Logic from './utils';
 
 const App: React.FC = () => {
-  const [mode, setMode] = useState<Mode | null>(null);
-  const [currentStep, setCurrentStep] = useState<Step>(Step.INITIAL);
+  const [currentStep, setCurrentStep] = useState<Step>(Step.COUNT);
   const [history, setHistory] = useState<Step[]>([]);
-  
   const [allCombinations, setAllCombinations] = useState<Combination[]>([]);
   const [filteredCombinations, setFilteredCombinations] = useState<Combination[]>([]);
   
-  // Custom states
-  const [isCustomCountActive, setIsCustomCountActive] = useState(false);
-  const [customCountValue, setCustomCountValue] = useState<string>("100");
+  // UI States
+  const [isCustomInputActive, setIsCustomInputActive] = useState(false);
+  const [customValue, setCustomValue] = useState<string>("100");
   const [imgError, setImgError] = useState(false);
 
   const [settings, setSettings] = useState<FilterSettings>({
@@ -32,47 +30,28 @@ const App: React.FC = () => {
   };
 
   const goBack = () => {
-    if (history.length === 0) {
-      setCurrentStep(Step.INITIAL);
-      setMode(null);
-      return;
-    }
+    if (history.length === 0) return;
     const newHistory = [...history];
     const prevStep = newHistory.pop()!;
     setHistory(newHistory);
     setCurrentStep(prevStep);
-    setIsCustomCountActive(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setIsCustomInputActive(false);
   };
 
   const reset = () => {
-    setMode(null);
-    setCurrentStep(Step.INITIAL);
+    setCurrentStep(Step.COUNT);
     setHistory([]);
     setAllCombinations([]);
     setFilteredCombinations([]);
-    setIsCustomCountActive(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const applyAllFilters = (initial: Combination[]) => {
-    let result = [...initial];
-    result = Logic.filterBySum(result, settings.sumRange[0], settings.sumRange[1]);
-    result = Logic.filterByEvenOdd(result, settings.evenOddMode);
-    result = Logic.filterBySize(result, settings.sizeMode);
-    result = Logic.filterByConsecutive(result, settings.consecutiveMode);
-    result = Logic.filterByZones(result, settings.zonesMode.min, settings.zonesMode.max);
-    result = Logic.filterByTail(result, settings.tailMode);
-    return result;
+    setIsCustomInputActive(false);
   };
 
   const currentCount = filteredCombinations.length;
   const initialCount = allCombinations.length;
-  const percentage = initialCount > 0 ? ((currentCount / initialCount) * 100).toFixed(1) : '0';
 
   const renderHeader = () => (
-    <div className="flex flex-col items-center mb-6 md:mb-10 mt-2 md:mt-6">
-      <div className="w-16 h-16 md:w-20 md:h-20 mb-4 bg-white/10 rounded-2xl flex items-center justify-center overflow-hidden border border-white/20 shadow-2xl">
+    <div className="flex flex-col items-center mb-6 mt-4">
+      <div className="w-16 h-16 mb-3 bg-white/5 rounded-2xl flex items-center justify-center overflow-hidden border border-white/10 shadow-lg">
         {!imgError ? (
           <img 
             src="logo.png" 
@@ -81,30 +60,30 @@ const App: React.FC = () => {
             onError={() => setImgError(true)}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-yellow-500 to-orange-600">
-             <span className="text-black font-black text-2xl">PB</span>
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-yellow-400 to-yellow-600">
+             <span className="text-black font-black text-xl">PB</span>
           </div>
         )}
       </div>
-      <h1 className="text-2xl md:text-3xl font-black tracking-tighter text-white uppercase text-center leading-none">
-        LOTTO LOGIC <span className="text-yellow-500">PB</span>
+      <h1 className="text-xl font-black tracking-tight text-white uppercase text-center">
+        POWERBALL <span className="text-yellow-500">WHITE NUMS</span>
       </h1>
-      <p className="text-[10px] md:text-xs text-gray-500 mt-2 uppercase tracking-[0.3em] font-medium">Num-Generator Pro</p>
+      <p className="text-[9px] text-gray-500 mt-1 uppercase tracking-[0.3em] font-bold italic">Smart Logic Filter</p>
     </div>
   );
 
   const renderProgress = () => {
-    if (currentStep === Step.INITIAL || currentStep === Step.RESULT) return null;
+    if (currentStep === Step.RESULT) return null;
     return (
-      <div className="w-full max-w-sm mx-auto mb-6 px-4">
-        <div className="flex justify-between text-[10px] text-gray-500 mb-2 uppercase tracking-widest font-bold">
-          <span>Filter Step {currentStep}/7</span>
-          <span className="text-yellow-500">{currentCount} Left</span>
+      <div className="w-full max-w-xs mx-auto mb-6 px-2">
+        <div className="flex justify-between text-[9px] text-gray-600 mb-1.5 uppercase font-black tracking-tighter">
+          <span>STEP {currentStep + 1} / 7</span>
+          <span className="text-yellow-600">{currentCount > 0 ? `${currentCount} MATCHES` : 'START'}</span>
         </div>
-        <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+        <div className="w-full bg-white/5 h-1 rounded-full">
           <div 
-            className="h-full bg-yellow-500 transition-all duration-500 ease-out shadow-[0_0_8px_rgba(234,179,8,0.5)]"
-            style={{ width: `${(currentStep / 7) * 100}%` }}
+            className="h-full bg-yellow-500 transition-all duration-500 ease-out"
+            style={{ width: `${((currentStep + 1) / 7) * 100}%` }}
           />
         </div>
       </div>
@@ -113,253 +92,82 @@ const App: React.FC = () => {
 
   const renderStepContent = () => {
     switch (currentStep) {
-      case Step.INITIAL:
-        return (
-          <div className="flex flex-col gap-4 max-w-xs mx-auto px-4 w-full">
-            <button 
-              onClick={() => { setMode(Mode.STEP_BY_STEP); goToStep(Step.COUNT); }}
-              className="group relative px-6 py-5 bg-white text-black font-black rounded-2xl hover:bg-gray-100 transition-all uppercase tracking-tighter shadow-xl overflow-hidden active:scale-95"
-            >
-              <span className="relative z-10">Step by Step Guide</span>
-              <div className="absolute inset-0 bg-yellow-500 translate-y-full group-hover:translate-y-[90%] transition-transform duration-300 opacity-20"></div>
-            </button>
-            <button 
-              onClick={() => { setMode(Mode.ONE_CLICK); goToStep(Step.COUNT); }}
-              className="px-6 py-5 border-2 border-white/20 text-white font-bold rounded-2xl hover:bg-white hover:text-black transition-all uppercase tracking-tighter active:scale-95"
-            >
-              One-Click Direct
-            </button>
-          </div>
-        );
-
       case Step.COUNT:
-        const counts = [10, 20, 30, 40, 50];
-        if (isCustomCountActive) {
+        if (isCustomInputActive) {
           return (
-            <div className="pb-glass p-6 md:p-8 rounded-[2rem] max-w-sm mx-auto text-center border-yellow-500/20 border mx-4">
-              <h2 className="text-lg font-bold mb-6 uppercase tracking-tight text-gray-300">Set Custom Volume</h2>
+            <div className="pb-glass p-6 rounded-[2rem] max-w-xs mx-auto text-center border-yellow-500/20 border">
+              <h2 className="text-sm font-bold mb-4 uppercase text-gray-400">Custom Generation Count</h2>
               <input 
                 type="number" 
                 inputMode="numeric"
-                pattern="[0-9]*"
-                min="1" 
-                max="100"
-                value={customCountValue}
-                onChange={(e) => setCustomCountValue(e.target.value)}
-                className="w-full bg-black/40 border border-white/10 rounded-2xl px-4 py-5 text-center text-5xl font-black text-yellow-500 mb-8 focus:border-yellow-500 outline-none transition-all shadow-inner"
+                min="1" max="100"
+                value={customValue}
+                onChange={(e) => setCustomValue(e.target.value)}
+                className="w-full bg-black/40 border-b-2 border-yellow-500 py-4 text-center text-5xl font-black text-white mb-6 outline-none"
                 autoFocus
               />
-              <div className="flex gap-3">
-                <button 
-                  onClick={() => setIsCustomCountActive(false)}
-                  className="flex-1 py-4 bg-white/5 rounded-2xl font-bold uppercase tracking-widest text-[10px] text-gray-400 hover:bg-white/10 transition"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={() => {
-                    const n = parseInt(customCountValue);
-                    if (n > 0 && n <= 100) {
-                      const combos = Logic.generateCombinations(n);
-                      setAllCombinations(combos);
-                      setFilteredCombinations(combos);
-                      setIsCustomCountActive(false);
-                      if (mode === Mode.STEP_BY_STEP) goToStep(Step.SUM);
-                      else goToStep(Step.RESULT);
-                    } else {
-                      alert("Please enter a number between 1 and 100.");
-                    }
-                  }}
-                  className="flex-1 py-4 bg-yellow-500 text-black rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-yellow-500/20 active:scale-95 transition"
-                >
-                  Confirm
-                </button>
+              <div className="flex gap-2">
+                <button onClick={() => setIsCustomInputActive(false)} className="flex-1 py-3 bg-white/5 rounded-xl text-[10px] font-black uppercase text-gray-500">Cancel</button>
+                <button onClick={() => {
+                  const n = parseInt(customValue);
+                  if (n > 0 && n <= 100) {
+                    const combos = Logic.generateCombinations(n);
+                    setAllCombinations(combos);
+                    setFilteredCombinations(combos);
+                    goToStep(Step.SUM);
+                  }
+                }} className="flex-1 py-3 bg-yellow-500 text-black rounded-xl text-[10px] font-black uppercase shadow-lg shadow-yellow-500/20">Apply</button>
               </div>
             </div>
           );
         }
         return (
-          <div className="pb-glass p-6 md:p-8 rounded-[2rem] max-w-md mx-auto mx-4">
-            <h2 className="text-lg font-bold mb-6 text-center uppercase tracking-tight text-white/90">Generation Volume</h2>
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              {counts.map(c => (
+          <div className="pb-glass p-6 rounded-[2rem] max-w-xs mx-auto w-full">
+            <h2 className="text-sm font-black mb-6 text-center uppercase tracking-widest text-white/80">Select Count</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {[10, 20, 30, 40, 50].map(c => (
                 <button 
                   key={c}
                   onClick={() => {
                     const combos = Logic.generateCombinations(c);
                     setAllCombinations(combos);
                     setFilteredCombinations(combos);
-                    if (mode === Mode.STEP_BY_STEP) goToStep(Step.SUM);
-                    else goToStep(Step.RESULT);
+                    goToStep(Step.SUM);
                   }}
-                  className="p-6 bg-white/5 rounded-2xl hover:bg-white/10 transition font-black text-3xl text-white border border-white/5 active:scale-95"
+                  className="p-6 bg-white/5 rounded-2xl font-black text-2xl text-white border border-white/5 active:scale-95 transition-transform"
                 >
                   {c}
                 </button>
               ))}
               <button 
-                onClick={() => setIsCustomCountActive(true)}
-                className="col-span-2 p-5 bg-yellow-500 text-black rounded-2xl hover:bg-yellow-400 transition font-black text-xl uppercase tracking-tighter shadow-lg shadow-yellow-500/20 active:scale-95"
+                onClick={() => setIsCustomInputActive(true)}
+                className="p-6 bg-yellow-500 text-black rounded-2xl font-black text-sm uppercase tracking-tighter active:scale-95 transition-transform"
               >
-                Custom (Max 100)
+                Custom
               </button>
             </div>
           </div>
         );
 
       case Step.SUM:
-      case Step.EVEN_ODD:
-      case Step.SIZE:
-      case Step.CONSECUTIVE:
-      case Step.ZONES:
-      case Step.TAIL:
-        // Unified UI for filter steps to keep it clean on mobile
-        const getStepData = () => {
-          switch(currentStep) {
-            case Step.SUM: return {
-              title: "Sum Range (SUM)",
-              desc: "Optimal sum for 5 PB white balls",
-              options: [
-                { label: '130 - 220 (Recommended)', action: () => {
-                  setSettings({ ...settings, sumRange: [130, 220] });
-                  setFilteredCombinations(Logic.filterBySum(filteredCombinations, 130, 220));
-                  goToStep(Step.EVEN_ODD);
-                }},
-                { label: '135 - 215', action: () => {
-                  setSettings({ ...settings, sumRange: [135, 215] });
-                  setFilteredCombinations(Logic.filterBySum(filteredCombinations, 135, 215));
-                  goToStep(Step.EVEN_ODD);
-                }},
-                { label: '140 - 210', action: () => {
-                  setSettings({ ...settings, sumRange: [140, 210] });
-                  setFilteredCombinations(Logic.filterBySum(filteredCombinations, 140, 210));
-                  goToStep(Step.EVEN_ODD);
-                }},
-                { label: 'Custom Range', isCustom: true, action: () => {
-                  const min = parseInt(prompt("Min sum?", "130") || "130");
-                  const max = parseInt(prompt("Max sum?", "220") || "220");
-                  setSettings({ ...settings, sumRange: [min, max] });
-                  setFilteredCombinations(Logic.filterBySum(filteredCombinations, min, max));
-                  goToStep(Step.EVEN_ODD);
-                }}
-              ]
-            };
-            case Step.EVEN_ODD: return {
-              title: "Even : Odd Ratio",
-              desc: "Balance of even and odd numbers",
-              options: [
-                { label: 'Exclude 5:0 / 0:5 (Recommended)', action: () => {
-                  setSettings({ ...settings, evenOddMode: 'exclude-skewed' });
-                  setFilteredCombinations(Logic.filterByEvenOdd(filteredCombinations, 'exclude-skewed'));
-                  goToStep(Step.SIZE);
-                }},
-                { label: 'Only Keep 2:3 / 3:2', action: () => {
-                  setSettings({ ...settings, evenOddMode: 'only-balanced' });
-                  setFilteredCombinations(Logic.filterByEvenOdd(filteredCombinations, 'only-balanced'));
-                  goToStep(Step.SIZE);
-                }}
-              ]
-            };
-            case Step.SIZE: return {
-              title: "Big : Small Ratio",
-              desc: "1-34 Small vs 35-69 Big",
-              options: [
-                { label: 'Exclude 5:0 / 0:5 (Recommended)', action: () => {
-                  setSettings({ ...settings, sizeMode: 'exclude-skewed' });
-                  setFilteredCombinations(Logic.filterBySize(filteredCombinations, 'exclude-skewed'));
-                  goToStep(Step.CONSECUTIVE);
-                }},
-                { label: 'Only Keep 2:3 / 3:2', action: () => {
-                  setSettings({ ...settings, sizeMode: 'only-balanced' });
-                  setFilteredCombinations(Logic.filterBySize(filteredCombinations, 'only-balanced'));
-                  goToStep(Step.CONSECUTIVE);
-                }}
-              ]
-            };
-            case Step.CONSECUTIVE: return {
-              title: "Consecutive Numbers",
-              desc: "Limit adjacent numbers (e.g. 12, 13)",
-              options: [
-                { label: 'Max 1 Pair (Recommended)', action: () => {
-                  setSettings({ ...settings, consecutiveMode: 'allow-one-pair' });
-                  setFilteredCombinations(Logic.filterByConsecutive(filteredCombinations, 'allow-one-pair'));
-                  goToStep(Step.ZONES);
-                }},
-                { label: 'None Allowed', action: () => {
-                  setSettings({ ...settings, consecutiveMode: 'none' });
-                  setFilteredCombinations(Logic.filterByConsecutive(filteredCombinations, 'none'));
-                  goToStep(Step.ZONES);
-                }}
-              ]
-            };
-            case Step.ZONES: return {
-              title: "Sector Spread",
-              desc: "Spread across 7 number clusters",
-              options: [
-                { label: '2 - 4 Zones (Recommended)', action: () => {
-                  setSettings({ ...settings, zonesMode: { min: 2, max: 4 } });
-                  setFilteredCombinations(Logic.filterByZones(filteredCombinations, 2, 4));
-                  goToStep(Step.TAIL);
-                }},
-                { label: '1 - 5 Zones', action: () => {
-                  setSettings({ ...settings, zonesMode: { min: 1, max: 5 } });
-                  setFilteredCombinations(Logic.filterByZones(filteredCombinations, 1, 5));
-                  goToStep(Step.TAIL);
-                }},
-                { label: 'Exactly 1 Zone', action: () => {
-                  setSettings({ ...settings, zonesMode: { min: 1, max: 1 } });
-                  setFilteredCombinations(Logic.filterByZones(filteredCombinations, 1, 1));
-                  goToStep(Step.TAIL);
-                }},
-                { label: 'Exactly 5 Zones', action: () => {
-                  setSettings({ ...settings, zonesMode: { min: 5, max: 5 } });
-                  setFilteredCombinations(Logic.filterByZones(filteredCombinations, 5, 5));
-                  goToStep(Step.TAIL);
-                }},
-                { label: 'Custom Zones', isCustom: true, action: () => {
-                  const min = parseInt(prompt("Min zones?", "2") || "2");
-                  const max = parseInt(prompt("Max zones?", "4") || "4");
-                  setSettings({ ...settings, zonesMode: { min, max } });
-                  setFilteredCombinations(Logic.filterByZones(filteredCombinations, min, max));
-                  goToStep(Step.TAIL);
-                }}
-              ]
-            };
-            case Step.TAIL: return {
-              title: "Tail Digit (TAIL)",
-              desc: "Same ending digits (e.g. 12, 32)",
-              options: [
-                { label: 'Max 1 Pair (Recommended)', action: () => {
-                  setSettings({ ...settings, tailMode: 'allow-one-pair' });
-                  setFilteredCombinations(Logic.filterByTail(filteredCombinations, 'allow-one-pair'));
-                  goToStep(Step.RESULT);
-                }},
-                { label: 'No Pairs Allowed', action: () => {
-                  setSettings({ ...settings, tailMode: 'none' });
-                  setFilteredCombinations(Logic.filterByTail(filteredCombinations, 'none'));
-                  goToStep(Step.RESULT);
-                }}
-              ]
-            };
-            default: return { title: "", desc: "", options: [] };
-          }
-        };
-
-        const stepData = getStepData();
         return (
-          <div className="pb-glass p-6 md:p-8 rounded-[2rem] max-w-md mx-auto mx-4 border-white/5 border">
-            <h2 className="text-xl font-black text-center uppercase tracking-tight text-white mb-1">{stepData.title}</h2>
-            <p className="text-[10px] text-gray-500 mb-6 text-center uppercase tracking-widest font-bold">{stepData.desc}</p>
-            <div className="flex flex-col gap-3">
-              {stepData.options.map((opt, i) => (
+          <div className="pb-glass p-6 rounded-[2rem] max-w-xs mx-auto w-full border-white/5 border">
+            <h2 className="text-sm font-black text-center uppercase text-white mb-1">Sum Filtering</h2>
+            <p className="text-[9px] text-gray-500 mb-6 text-center uppercase font-bold">Total sum of 5 balls</p>
+            <div className="flex flex-col gap-2">
+              {[
+                { label: '130 - 220 (Standard)', range: [130, 220] },
+                { label: '135 - 215 (Tight)', range: [135, 215] },
+                { label: '140 - 210 (Extreme)', range: [140, 210] }
+              ].map((opt, i) => (
                 <button 
                   key={i}
-                  onClick={opt.action}
-                  className={`p-5 rounded-2xl text-left transition font-bold text-sm active:scale-[0.98] ${
-                    opt.isCustom 
-                    ? "bg-yellow-500/10 border border-yellow-500/40 text-yellow-500" 
-                    : "bg-white/5 border border-white/5 text-gray-200 hover:bg-white/10"
-                  }`}
+                  onClick={() => {
+                    setSettings({ ...settings, sumRange: opt.range as [number, number] });
+                    setFilteredCombinations(Logic.filterBySum(filteredCombinations, opt.range[0], opt.range[1]));
+                    goToStep(Step.EVEN_ODD);
+                  }}
+                  className="p-4 bg-white/5 rounded-xl text-left font-bold text-xs text-gray-300 border border-white/5 active:bg-white/10"
                 >
                   {opt.label}
                 </button>
@@ -368,106 +176,178 @@ const App: React.FC = () => {
           </div>
         );
 
-      case Step.RESULT:
-        const finalResults = mode === Mode.ONE_CLICK ? applyAllFilters(allCombinations) : filteredCombinations;
+      case Step.EVEN_ODD:
         return (
-          <div className="pb-glass p-5 md:p-8 rounded-[2rem] w-full max-w-3xl mx-auto border-white/10 border mx-4 shadow-2xl">
-            <div className="flex justify-between items-end mb-6 md:mb-8 border-b border-white/10 pb-4">
+          <div className="pb-glass p-6 rounded-[2rem] max-w-xs mx-auto w-full border-white/5 border">
+            <h2 className="text-sm font-black text-center uppercase text-white mb-1">Balance Ratio</h2>
+            <p className="text-[9px] text-gray-500 mb-6 text-center uppercase font-bold">Even vs Odd balance</p>
+            <div className="flex flex-col gap-2">
+              <button onClick={() => {
+                setSettings({ ...settings, evenOddMode: 'exclude-skewed' });
+                setFilteredCombinations(Logic.filterByEvenOdd(filteredCombinations, 'exclude-skewed'));
+                goToStep(Step.SIZE);
+              }} className="p-4 bg-white/5 rounded-xl text-left font-bold text-xs text-gray-300">Exclude 5:0 / 0:5</button>
+              <button onClick={() => {
+                setSettings({ ...settings, evenOddMode: 'only-balanced' });
+                setFilteredCombinations(Logic.filterByEvenOdd(filteredCombinations, 'only-balanced'));
+                goToStep(Step.SIZE);
+              }} className="p-4 bg-white/5 rounded-xl text-left font-bold text-xs text-gray-300">Only 2:3 or 3:2</button>
+            </div>
+          </div>
+        );
+
+      case Step.SIZE:
+        return (
+          <div className="pb-glass p-6 rounded-[2rem] max-w-xs mx-auto w-full border-white/5 border">
+            <h2 className="text-sm font-black text-center uppercase text-white mb-1">Magnitude</h2>
+            <p className="text-[9px] text-gray-500 mb-6 text-center uppercase font-bold">Small (1-34) vs Big (35-69)</p>
+            <div className="flex flex-col gap-2">
+              <button onClick={() => {
+                setSettings({ ...settings, sizeMode: 'exclude-skewed' });
+                setFilteredCombinations(Logic.filterBySize(filteredCombinations, 'exclude-skewed'));
+                goToStep(Step.CONSECUTIVE);
+              }} className="p-4 bg-white/5 rounded-xl text-left font-bold text-xs text-gray-300">Exclude 5:0 / 0:5</button>
+              <button onClick={() => {
+                setSettings({ ...settings, sizeMode: 'only-balanced' });
+                setFilteredCombinations(Logic.filterBySize(filteredCombinations, 'only-balanced'));
+                goToStep(Step.CONSECUTIVE);
+              }} className="p-4 bg-white/5 rounded-xl text-left font-bold text-xs text-gray-300">Only 2:3 or 3:2</button>
+            </div>
+          </div>
+        );
+
+      case Step.CONSECUTIVE:
+        return (
+          <div className="pb-glass p-6 rounded-[2rem] max-w-xs mx-auto w-full border-white/5 border">
+            <h2 className="text-sm font-black text-center uppercase text-white mb-1">Neighbor Links</h2>
+            <p className="text-[9px] text-gray-500 mb-6 text-center uppercase font-bold">Limit consecutive numbers</p>
+            <div className="flex flex-col gap-2">
+              <button onClick={() => {
+                setSettings({ ...settings, consecutiveMode: 'allow-one-pair' });
+                setFilteredCombinations(Logic.filterByConsecutive(filteredCombinations, 'allow-one-pair'));
+                goToStep(Step.ZONES);
+              }} className="p-4 bg-white/5 rounded-xl text-left font-bold text-xs text-gray-300">Allow Max 1 Pair</button>
+              <button onClick={() => {
+                setSettings({ ...settings, consecutiveMode: 'none' });
+                setFilteredCombinations(Logic.filterByConsecutive(filteredCombinations, 'none'));
+                goToStep(Step.ZONES);
+              }} className="p-4 bg-white/5 rounded-xl text-left font-bold text-xs text-gray-300">Zero Consecutive</button>
+            </div>
+          </div>
+        );
+
+      case Step.ZONES:
+        return (
+          <div className="pb-glass p-6 rounded-[2rem] max-w-xs mx-auto w-full border-white/5 border">
+            <h2 className="text-sm font-black text-center uppercase text-white mb-1">Sector Spread</h2>
+            <p className="text-[9px] text-gray-500 mb-6 text-center uppercase font-bold">Distribution across 7 zones</p>
+            <div className="flex flex-col gap-2">
+              <button onClick={() => {
+                setSettings({ ...settings, zonesMode: { min: 2, max: 4 } });
+                setFilteredCombinations(Logic.filterByZones(filteredCombinations, 2, 4));
+                goToStep(Step.TAIL);
+              }} className="p-4 bg-white/5 rounded-xl text-left font-bold text-xs text-gray-300">2 - 4 Zones (Optimal)</button>
+              <button onClick={() => {
+                setSettings({ ...settings, zonesMode: { min: 3, max: 5 } });
+                setFilteredCombinations(Logic.filterByZones(filteredCombinations, 3, 5));
+                goToStep(Step.TAIL);
+              }} className="p-4 bg-white/5 rounded-xl text-left font-bold text-xs text-gray-300">3 - 5 Zones (High Spread)</button>
+            </div>
+          </div>
+        );
+
+      case Step.TAIL:
+        return (
+          <div className="pb-glass p-6 rounded-[2rem] max-w-xs mx-auto w-full border-white/5 border">
+            <h2 className="text-sm font-black text-center uppercase text-white mb-1">End Digits</h2>
+            <p className="text-[9px] text-gray-500 mb-6 text-center uppercase font-bold">Same tail matching (e.g. 12, 32)</p>
+            <div className="flex flex-col gap-2">
+              <button onClick={() => {
+                setSettings({ ...settings, tailMode: 'allow-one-pair' });
+                setFilteredCombinations(Logic.filterByTail(filteredCombinations, 'allow-one-pair'));
+                goToStep(Step.RESULT);
+              }} className="p-4 bg-white/5 rounded-xl text-left font-bold text-xs text-gray-300">Allow Max 1 Tail Pair</button>
+              <button onClick={() => {
+                setSettings({ ...settings, tailMode: 'none' });
+                setFilteredCombinations(Logic.filterByTail(filteredCombinations, 'none'));
+                goToStep(Step.RESULT);
+              }} className="p-4 bg-white/5 rounded-xl text-left font-bold text-xs text-gray-300">Unique Tails Only</button>
+            </div>
+          </div>
+        );
+
+      case Step.RESULT:
+        return (
+          <div className="pb-glass p-5 rounded-[2rem] w-full max-w-md mx-auto border-white/10 border shadow-2xl overflow-hidden flex flex-col max-h-[75vh]">
+            <div className="flex justify-between items-end mb-4 border-b border-white/5 pb-4 px-2">
                <div>
-                 <h2 className="text-xl md:text-2xl font-black uppercase tracking-tighter text-white">Results</h2>
-                 <p className="text-[9px] md:text-[10px] text-gray-500 uppercase tracking-[0.2em] mt-1 font-bold">Logic filtering complete</p>
+                 <h2 className="text-sm font-black uppercase text-white">Generated Lists</h2>
+                 <p className="text-[8px] text-gray-500 uppercase tracking-widest mt-0.5">Filter complete</p>
                </div>
                <div className="text-right">
-                  <div className="text-yellow-500 font-black text-3xl md:text-4xl leading-none">{finalResults.length}</div>
-                  <div className="text-gray-500 text-[9px] md:text-[10px] uppercase tracking-widest mt-1 font-bold">Matches</div>
+                  <div className="text-yellow-500 font-black text-2xl leading-none">{filteredCombinations.length}</div>
+                  <div className="text-gray-500 text-[8px] uppercase font-bold">Matches</div>
                </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[45vh] md:max-h-[50vh] overflow-y-auto mb-6 pr-1 custom-scrollbar">
-              {finalResults.length > 0 ? finalResults.map((combo, idx) => (
-                <div key={idx} className="bg-white/[0.03] border border-white/5 p-4 rounded-2xl flex justify-between items-center group active:bg-yellow-500 transition-all">
-                  <div className="flex gap-1.5 md:gap-2">
+            <div className="flex-1 overflow-y-auto mb-4 pr-1 custom-scrollbar">
+              {filteredCombinations.length > 0 ? filteredCombinations.map((combo, idx) => (
+                <div key={idx} className="bg-white/[0.03] border border-white/5 p-3 rounded-xl flex justify-between items-center mb-2">
+                  <div className="flex gap-1">
                     {combo.map(n => (
-                      <span key={n} className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-white/5 rounded-full font-black text-xs md:text-sm text-yellow-500 group-active:text-black group-active:bg-black/10 transition-colors">
+                      <span key={n} className="w-8 h-8 flex items-center justify-center bg-white/5 rounded-full font-black text-[10px] text-yellow-500">
                         {n}
                       </span>
                     ))}
                   </div>
-                  <div className="text-[10px] text-gray-700 font-black uppercase tracking-tighter">#{idx+1}</div>
+                  <div className="text-[9px] text-gray-700 font-black uppercase italic">P#{idx+1}</div>
                 </div>
               )) : (
-                <div className="col-span-1 md:col-span-2 py-16 text-center text-gray-500 flex flex-col items-center">
-                  <div className="w-12 h-12 mb-4 opacity-20 bg-white/20 rounded-full flex items-center justify-center">!</div>
-                  <span className="font-bold text-xs uppercase tracking-widest">Zero Matches Found</span>
-                  <span className="text-[10px] mt-2 opacity-50 uppercase tracking-tight">Parameters were too restrictive.</span>
+                <div className="py-12 text-center text-gray-600 flex flex-col items-center">
+                  <span className="font-black text-[10px] uppercase tracking-[0.2em]">No Matches</span>
+                  <span className="text-[8px] mt-1 opacity-50 uppercase">Try broad filters next time.</span>
                 </div>
               )}
             </div>
 
-            <button 
-              onClick={reset}
-              className="w-full py-4 md:py-5 bg-white text-black font-black rounded-2xl uppercase tracking-[0.2em] text-xs md:text-sm hover:bg-yellow-500 transition-all shadow-xl active:scale-95"
-            >
-              Restart Session
-            </button>
+            <button onClick={reset} className="w-full py-4 bg-white text-black font-black rounded-xl uppercase tracking-widest text-[10px] active:scale-95 transition-transform shadow-lg">New Batch</button>
           </div>
         );
-
-      default:
-        return null;
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start md:justify-center p-4 bg-[#050505] overflow-x-hidden">
-      <div className="w-full max-w-4xl flex flex-col">
+    <div className="min-h-[100dvh] flex flex-col items-center justify-start p-4 bg-[#050505] text-white overflow-x-hidden selection:bg-yellow-500/30">
+      <div className="w-full max-w-lg flex flex-col h-full">
         {renderHeader()}
         {renderProgress()}
         
-        <main className="flex-1 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <main className="flex-1 w-full flex flex-col justify-start">
           {renderStepContent()}
         </main>
 
-        {currentStep !== Step.INITIAL && (
-          <div className="mt-8 flex justify-center mb-8">
-             {currentStep !== Step.RESULT && !isCustomCountActive && (
-               <button 
-                 onClick={goBack}
-                 className="flex items-center gap-2 text-gray-600 hover:text-white transition uppercase text-[10px] font-black tracking-[0.3em] active:scale-95 px-4 py-2 bg-white/5 rounded-full"
-               >
-                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                 </svg>
-                 Back
-               </button>
-             )}
+        {currentStep !== Step.COUNT && currentStep !== Step.RESULT && (
+          <div className="mt-6 flex justify-center mb-4">
+             <button onClick={goBack} className="flex items-center gap-2 text-gray-600 hover:text-white transition uppercase text-[9px] font-black tracking-widest px-4 py-2 bg-white/5 rounded-full">
+               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+               </svg>
+               Back
+             </button>
           </div>
         )}
       </div>
       
-      <footer className="mt-auto md:fixed md:bottom-4 text-center w-full text-[8px] md:text-[9px] text-gray-800 uppercase tracking-[0.4em] pointer-events-none font-black pb-4 md:pb-0">
-        Lotto Logic Systems • Terminal PB-V2.5
+      <footer className="mt-auto text-[8px] text-gray-800 uppercase tracking-[0.4em] font-black pb-4 text-center">
+        POWERBALL FILTER PB-V2.5
       </footer>
 
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 10px;
-        }
-        input[type='number']::-webkit-inner-spin-button,
-        input[type='number']::-webkit-outer-spin-button {
-          -webkit-appearance: none;
-          margin: 0;
-        }
-        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slide-in-from-bottom-4 { from { transform: translateY(1rem); } to { transform: translateY(0); } }
-        .animate-in { animation: fade-in 0.3s ease-out, slide-in-from-bottom-4 0.3s ease-out; }
+        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        input[type='number']::-webkit-inner-spin-button, input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        body { -webkit-tap-highlight-color: transparent; }
       `}</style>
     </div>
   );
