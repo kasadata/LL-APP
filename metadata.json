@@ -1,0 +1,5 @@
+{
+  "name": "LOTTO LOGIC PB NUM-GENERATOR",
+  "description": "A sophisticated Powerball white number generator with multi-step logical filtering based on sums, ratios, consecutive numbers, zones, and tails.",
+  "requestFramePermissions": []
+}
