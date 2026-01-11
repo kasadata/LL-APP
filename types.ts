@@ -1,7 +1,13 @@
 
 export type Combination = number[];
 
+export enum GameType {
+  POWERBALL = 'POWERBALL',
+  MEGA_MILLIONS = 'MEGA_MILLIONS'
+}
+
 export enum Step {
+  HOME = -1,
   COUNT = 0,
   SUM = 1,
   EVEN_ODD = 2,

@@ -1,48 +1,37 @@
+
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LOTTO LOGIC PB NUM-GENERATOR</title>
-
-    <!-- Tailwind CDN (OK for now; production warning is normal) -->
     <script src="https://cdn.tailwindcss.com"></script>
-
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
-      body {
-        font-family: "Inter", sans-serif;
-        background-color: #0a0a0a;
-        color: #f3f4f6;
-      }
-      .pb-glass {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-      }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0a;
+            color: #f3f4f6;
+        }
+        .pb-glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
     </style>
-  </head>
-
-  <body>
-  <div id="root"></div>
-
-  <!-- Footer -->
- <footer
-  class="fixed bottom-0 left-0 w-full py-3 text-center text-sm
-         bg-black/70 backdrop-blur-md
-         text-gray-400 z-50"
->
-  <a
-    href="https://www.youtube.com/@Lottologic"
-    target="_blank"
-    rel="noopener noreferrer"
-    class="hover:text-yellow-400 transition"
-  >
-    ▶ Visit Lotto Logic on YouTube
-  </a>
-</footer>
-
-  <!-- React entry -->
-  <script type="module" src="/index.tsx"></script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <div id="root"></div>
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>

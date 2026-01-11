@@ -1,0 +1,6 @@
+Place your logo file here as: Logo.jpeg
+
+This app will load it from:
+  ${import.meta.env.BASE_URL}Logo.jpeg
+
+For GitHub Pages project sites, make sure vite.config.ts has base set to '/LL-APP/' (or your repo name).

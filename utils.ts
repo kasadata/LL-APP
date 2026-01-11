@@ -1,12 +1,14 @@
 
-import { Combination, FilterSettings } from './types';
+import { Combination, GameType } from './types';
 
-export const generateCombinations = (count: number): Combination[] => {
+export const generateCombinations = (count: number, gameType: GameType): Combination[] => {
   const combinations: Combination[] = [];
+  const maxNum = gameType === GameType.POWERBALL ? 69 : 70;
+  
   for (let i = 0; i < count; i++) {
     const set = new Set<number>();
     while (set.size < 5) {
-      set.add(Math.floor(Math.random() * 69) + 1);
+      set.add(Math.floor(Math.random() * maxNum) + 1);
     }
     combinations.push(Array.from(set).sort((a, b) => a - b));
   }
@@ -23,37 +25,25 @@ export const filterBySum = (combos: Combination[], min: number, max: number): Co
 export const filterByEvenOdd = (combos: Combination[], mode: 'exclude-skewed' | 'only-balanced'): Combination[] => {
   return combos.filter(combo => {
     const evens = combo.filter(n => n % 2 === 0).length;
-    const odds = 5 - evens;
-    if (mode === 'exclude-skewed') {
-      // Exclude 5:0 or 0:5
-      return evens !== 0 && evens !== 5;
-    } else {
-      // Only 2:3 or 3:2
-      return evens === 2 || evens === 3;
-    }
+    if (mode === 'exclude-skewed') return evens !== 0 && evens !== 5;
+    return evens === 2 || evens === 3;
   });
 };
 
-export const filterBySize = (combos: Combination[], mode: 'exclude-skewed' | 'only-balanced'): Combination[] => {
+export const filterBySize = (combos: Combination[], mode: 'exclude-skewed' | 'only-balanced', gameType: GameType): Combination[] => {
+  const split = gameType === GameType.POWERBALL ? 34 : 35;
   return combos.filter(combo => {
-    const smalls = combo.filter(n => n <= 34).length; // 1-34 Small, 35-69 Big
-    const bigs = 5 - smalls;
-    if (mode === 'exclude-skewed') {
-      return smalls !== 0 && smalls !== 5;
-    } else {
-      return smalls === 2 || smalls === 3;
-    }
+    const smalls = combo.filter(n => n <= split).length;
+    if (mode === 'exclude-skewed') return smalls !== 0 && smalls !== 5;
+    return smalls === 2 || smalls === 3;
   });
 };
 
 export const filterByConsecutive = (combos: Combination[], mode: 'allow-one-pair' | 'none'): Combination[] => {
   return combos.filter(combo => {
     let consecutivePairs = 0;
-    const sorted = [...combo].sort((a, b) => a - b);
-    for (let i = 0; i < sorted.length - 1; i++) {
-      if (sorted[i + 1] - sorted[i] === 1) {
-        consecutivePairs++;
-      }
+    for (let i = 0; i < combo.length - 1; i++) {
+      if (combo[i + 1] - combo[i] === 1) consecutivePairs++;
     }
     if (mode === 'none') return consecutivePairs === 0;
     return consecutivePairs <= 1;
@@ -62,9 +52,8 @@ export const filterByConsecutive = (combos: Combination[], mode: 'allow-one-pair
 
 export const filterByZones = (combos: Combination[], min: number, max: number): Combination[] => {
   return combos.filter(combo => {
-    const zoneIndices = new Set(combo.map(n => Math.floor((n - 1) / 10)));
-    const zoneCount = zoneIndices.size;
-    return zoneCount >= min && zoneCount <= max;
+    const zones = new Set(combo.map(n => Math.floor((n - 1) / 10)));
+    return zones.size >= min && zones.size <= max;
   });
 };
 
@@ -73,16 +62,13 @@ export const filterByTail = (combos: Combination[], mode: 'allow-one-pair' | 'no
     const tails = combo.map(n => n % 10);
     const counts: Record<number, number> = {};
     tails.forEach(t => counts[t] = (counts[t] || 0) + 1);
-    
     const values = Object.values(counts);
-    // mode 'none': all tails unique (all values are 1)
-    if (mode === 'none') return values.every(v => v === 1);
     
-    // mode 'allow-one-pair': At most one pair (one 2, rest 1s)
-    // No triples (3+), and no two distinct pairs
+    // Check for triples or higher (skewed)
+    if (values.some(v => v > 2)) return false;
+    
     const pairsCount = values.filter(v => v === 2).length;
-    const moreThanPair = values.some(v => v > 2);
-    
-    return !moreThanPair && pairsCount <= 1;
+    if (mode === 'none') return pairsCount === 0;
+    return pairsCount >= 1; // Keep combos that include at least one same-tail pair (and no triples).
   });
 };
