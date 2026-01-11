@@ -14,7 +14,7 @@ const App: React.FC = () => {
   const [allCombinations, setAllCombinations] = useState<Combination[]>([]);
   const [filteredCombinations, setFilteredCombinations] = useState<Combination[]>([]);
   
-    const logoUrl = `${import.meta.env.BASE_URL}Logo.jpeg`;
+    const logoUrl = `${import.meta.env.BASE_URL}Logo-.jpeg`;
 
 const [isCustomInputActive, setIsCustomInputActive] = useState(false);
   const [customValue, setCustomValue] = useState<string>("100");
